@@ -1,0 +1,247 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ENUMS
+
+enum Role {
+  SUPER_ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum AgentType {
+  VALIDATE
+  OUTLINE
+  GENERATE
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum LLMProvider {
+  ANTHROPIC
+  OPENAI
+  GOOGLE
+}
+
+enum OutlineStatus {
+  DRAFT
+  APPROVED
+}
+
+enum ModuleStatus {
+  PENDING
+  GENERATED
+  FAILED
+}
+
+enum ContentBlockType {
+  TEXT
+  QUIZ
+  FLASHCARD
+  INFOGRAPHIC
+}
+
+enum SectionType {
+  PRE
+  POST
+}
+
+// AUTH
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  name               String
+  role               Role      @default(STUDENT)
+  lifecycleId        String?
+  studentId          String?
+  passwordHash       String
+  mustChangePassword Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+
+  sessions Session[]
+  courses  Course[]
+  jobs     AgentJob[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// COURSE & CONTENT
+
+model Course {
+  id                String   @id @default(cuid())
+  lifecycleCourseId String?
+  code              String
+  name              String
+  department        String
+  semester          Int
+  lecturerId        String
+  lecturer          User     @relation(fields: [lecturerId], references: [id])
+  createdAt         DateTime @default(now())
+
+  sourceFiles   SourceFile[]
+  outlines      CourseOutline[]
+  jobs          AgentJob[]
+  modules       Module[]
+
+  @@index([lecturerId])
+  @@map("courses")
+}
+
+model SourceFile {
+  id         String   @id @default(cuid())
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  fileName   String
+  r2Key      String
+  mimeType   String
+  sizeBytes  Int
+  indexed    Boolean  @default(false)
+  uploadedAt DateTime @default(now())
+
+  @@index([courseId])
+  @@map("source_files")
+}
+
+model CourseOutline {
+  id             String        @id @default(cuid())
+  courseId       String
+  course         Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lecturerBrief  String?       @db.Text
+  status         OutlineStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  sections OutlineSection[]
+
+  @@index([courseId])
+  @@map("course_outlines")
+}
+
+model OutlineSection {
+  id               String      @id @default(cuid())
+  outlineId        String
+  outline          CourseOutline @relation(fields: [outlineId], references: [id], onDelete: Cascade)
+  title            String
+  type             SectionType
+  order            Int
+  generationPrompt String?     @db.Text
+  teachingMethod   String?
+  sourceFileIds    String[]
+  createdAt        DateTime    @default(now())
+
+  modules Module[]
+
+  @@index([outlineId])
+  @@map("outline_sections")
+}
+
+model Module {
+  id        String       @id @default(cuid())
+  sectionId String
+  section   OutlineSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course       @relation(fields: [courseId], references: [id])
+  title     String
+  status    ModuleStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  contentBlocks ContentBlock[]
+
+  @@index([sectionId])
+  @@index([courseId])
+  @@map("modules")
+}
+
+model ContentBlock {
+  id       String           @id @default(cuid())
+  moduleId String
+  module   Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  type     ContentBlockType
+  content  Json
+  order    Int
+
+  @@index([moduleId])
+  @@map("content_blocks")
+}
+
+// AGENTS
+
+model PromptVersion {
+  id           String    @id @default(cuid())
+  agent        AgentType
+  version      Int
+  systemPrompt String    @db.Text
+  temperature  Float
+  model        String
+  maxTokens    Int
+  isActive     Boolean   @default(false)
+  notes        String?   @db.Text
+  createdBy    String?
+  createdAt    DateTime  @default(now())
+
+  jobs AgentJob[]
+
+  @@unique([agent, version])
+  @@index([agent, isActive])
+  @@map("prompt_versions")
+}
+
+model AgentJob {
+  id              String         @id @default(cuid())
+  agentType       AgentType
+  status          JobStatus      @default(PENDING)
+  llmProvider     LLMProvider?
+  model           String?
+  temperature     Float?
+  promptVersionId String?
+  promptVersion   PromptVersion? @relation(fields: [promptVersionId], references: [id], onDelete: SetNull)
+  inputData       Json
+  outputData      Json?
+  error           String?        @db.Text
+  durationMs      Int?
+  inputTokens     Int?
+  outputTokens    Int?
+  estimatedCost   Float?
+  courseId        String?
+  course          Course?        @relation(fields: [courseId], references: [id])
+  userId          String?
+  user            User?          @relation(fields: [userId], references: [id])
+  createdAt       DateTime       @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  @@index([agentType, status])
+  @@index([courseId])
+  @@index([createdAt])
+  @@map("agent_jobs")
+}

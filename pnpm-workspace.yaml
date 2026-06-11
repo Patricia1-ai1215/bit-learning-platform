@@ -1,0 +1,19 @@
+allowBuilds:
+  '@firebase/util': false
+  '@prisma/engines': true
+  esbuild: true
+  msgpackr-extract: false
+  msw: false
+  prisma: true
+  protobufjs: false
+  sharp: true
+  unrs-resolver: false
+ignoredBuiltDependencies:
+  - '@firebase/util'
+  - msgpackr-extract
+  - protobufjs
+  - sharp
+  - unrs-resolver
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - prisma

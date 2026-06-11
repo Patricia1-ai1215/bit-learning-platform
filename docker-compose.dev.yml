@@ -1,0 +1,26 @@
+# Starts only the database — use this for local development
+# so you can still run `pnpm dev` normally with hot reload.
+#
+# Usage: docker compose -f docker-compose.dev.yml up -d
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: elearning-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: elearning
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d elearning"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
