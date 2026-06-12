@@ -2,6 +2,7 @@
 
 import { TextStep } from '@/lib/mock/courseData';
 import { Quote } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface TextRendererProps {
   step: TextStep;
@@ -11,7 +12,10 @@ export default function TextRenderer({ step }: TextRendererProps) {
   return (
     <article className="prose max-w-none text-gray-700">
       {/* Main Content */}
-      <p className="text-lg leading-relaxed mb-6">{step.content}</p>
+      <div className="prose max-w-none text-gray-700">
+        <ReactMarkdown>{step.content}</ReactMarkdown>
+      </div>
+
 
       {/* Pull Quote (Highlight Box) */}
       {step.pullQuote && (

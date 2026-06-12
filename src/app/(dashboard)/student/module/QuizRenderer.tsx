@@ -7,9 +7,11 @@ import { CheckCircle, XCircle } from 'lucide-react';
 interface QuizRendererProps {
   step: QuizStep;
   onQuizComplete: () => void; // To unlock the Next button
+  setQuizScore: (score: string) => void; // NEW
 }
 
-export default function QuizRenderer({ step, onQuizComplete }: QuizRendererProps) {
+
+export default function QuizRenderer({ step, onQuizComplete, setQuizScore }: QuizRendererProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -32,6 +34,10 @@ export default function QuizRenderer({ step, onQuizComplete }: QuizRendererProps
     // If all questions are answered, tell the StepRunner to unlock the Next button
     if (newAnsweredCount === step.questions.length) {
       onQuizComplete();
+
+      // Simple score calculation for the last question
+      const score = selectedOption === currentQuestion.correctIndex ? "1/1" : "0/1";
+      setQuizScore(score);
     }
   };
 

@@ -6,28 +6,39 @@ import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 
 interface FlashcardRendererProps {
   step: FlashcardStep;
+  seenFlashcards: Set<number>;
+  setSeenFlashcards: React.Dispatch<React.SetStateAction<Set<number>>>;
 }
 
-export default function FlashcardRenderer({ step }: FlashcardRendererProps) {
+export default function FlashcardRenderer({
+  step,
+  seenFlashcards,
+  setSeenFlashcards,
+}: FlashcardRendererProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [seenCards, setSeenCards] = useState<Set<number>>(new Set([0]));
 
   const currentCard = step.cards[currentIndex];
+
+  const markSeen = (index: number) => {
+    setSeenFlashcards((prev) => new Set(prev).add(index));
+  };
 
   const handleNextCard = () => {
     if (currentIndex < step.cards.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
       setIsFlipped(false);
-      setSeenCards((prev) => new Set(prev).add(nextIndex));
+      markSeen(nextIndex);
     }
   };
 
   const handlePrevCard = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      const prevIndex = currentIndex - 1;
+      setCurrentIndex(prevIndex);
       setIsFlipped(false);
+      markSeen(prevIndex);
     }
   };
 
@@ -72,7 +83,9 @@ export default function FlashcardRenderer({ step }: FlashcardRendererProps) {
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
               Question · Card {currentIndex + 1}
             </span>
-            <h3 className="text-xl font-bold text-gray-900 text-center leading-snug">{currentCard.front}</h3>
+            <h3 className="text-xl font-bold text-gray-900 text-center leading-snug">
+              {currentCard.front}
+            </h3>
             <div className="mt-auto flex items-center justify-center gap-2 text-xs text-gray-400 self-center">
               <RotateCcw size={12} /> Click to flip
             </div>
@@ -80,7 +93,9 @@ export default function FlashcardRenderer({ step }: FlashcardRendererProps) {
 
           {/* Back Face */}
           <div className="absolute inset-0 bg-gray-900 rounded-2xl shadow-lg p-8 flex flex-col justify-center backface-hidden rotate-y-180">
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Answer</span>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">
+              Answer
+            </span>
             <p className="text-lg text-white text-center leading-relaxed">{currentCard.back}</p>
             <div className="mt-auto flex items-center justify-center gap-2 text-xs text-gray-500 self-center">
               <RotateCcw size={12} /> Click to flip back
@@ -120,7 +135,7 @@ export default function FlashcardRenderer({ step }: FlashcardRendererProps) {
           <span
             key={i}
             className={`h-1.5 rounded-full transition-all ${
-              seenCards.has(i)
+              seenFlashcards.has(i)
                 ? i === currentIndex
                   ? 'w-6 bg-primary-500'
                   : 'w-1.5 bg-green-500'

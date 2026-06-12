@@ -13,6 +13,10 @@ interface StepRunnerProps {
   isQuizLocked: boolean;
   onStepChange: (index: number) => void;
   onQuizUnlock: () => void;
+  onModuleComplete: () => void;
+  setQuizScore: (score: string) => void;
+  seenFlashcards: Set<number>; // ICI
+  setSeenFlashcards: React.Dispatch<React.SetStateAction<Set<number>>>; // ICI
 }
 
 export default function StepRunner({
@@ -21,8 +25,13 @@ export default function StepRunner({
   isQuizLocked,
   onStepChange,
   onQuizUnlock,
+  onModuleComplete,
+  setQuizScore,
+  seenFlashcards,
+  setSeenFlashcards,
 }: StepRunnerProps) {
   const currentStep = steps[currentStepIndex];
+  const isLastStep = currentStepIndex === steps.length - 1;
 
   const renderStep = () => {
     switch (currentStep.type) {
@@ -31,11 +40,25 @@ export default function StepRunner({
       case 'DIAGRAM':
         return <DiagramRenderer step={currentStep} />;
       case 'FLASHCARD':
-        return <FlashcardRenderer step={currentStep} />;
+        return (
+          <FlashcardRenderer
+            step={currentStep}
+            seenFlashcards={seenFlashcards}
+            setSeenFlashcards={setSeenFlashcards}
+          />
+        );
       case 'QUIZ':
-        return <QuizRenderer step={currentStep} onQuizComplete={onQuizUnlock} />;
+        return <QuizRenderer step={currentStep} onQuizComplete={onQuizUnlock} setQuizScore={setQuizScore} />;
       default:
         return null;
+    }
+  };
+
+  const handleNext = () => {
+    if (isLastStep) {
+      onModuleComplete();
+    } else {
+      onStepChange(currentStepIndex + 1);
     }
   };
 
@@ -53,7 +76,7 @@ export default function StepRunner({
         totalSteps={steps.length}
         isQuizLocked={isQuizLocked}
         onPrev={() => onStepChange(currentStepIndex - 1)}
-        onNext={() => onStepChange(currentStepIndex + 1)}
+        onNext={handleNext}
       />
     </div>
   );
