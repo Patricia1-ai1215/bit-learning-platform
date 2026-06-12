@@ -85,7 +85,7 @@ export const mockCourseData: Course = {
               id: 's1',
               type: 'TEXT',
               content: 'In supervised learning, you give the model a stack of examples where every input comes paired with the correct output. The model’s only job is to find a function that maps inputs to outputs well enough to handle new examples it has never seen.',
-              pullQuote: 'A supervised learner is a student with an answer key. It learns by being told the right answer for thousands of examples.',
+              pullQuote: '"A supervised learner is a student with an answer key. It learns by being told the right answer for thousands of examples."',
               keyTerms: ['Classification', 'Regression', 'Overfitting']
             },
             {

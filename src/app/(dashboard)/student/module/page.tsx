@@ -1,13 +1,14 @@
 "use client";
 
+import { useState } from 'react';
 import Sidebar from "./Sidebar";
 import ModuleNav from "./ModuleNav";
 import ModuleHeader from "./ModuleHeader";
+import StepRunner from "./StepRunner";
 import { mockCourseData } from "@/lib/mock/courseData";
 
 export default function ModulePage() {
-  // TODO (BIT-811): Replace mock data with fetch to GET /api/courses/:id/modules when backend is ready
-  const activeModuleId = "m2";
+  const activeModuleId = 'm2';
 
   let activeModule = null;
   let isFirstInLesson = false;
@@ -23,41 +24,44 @@ export default function ModulePage() {
     if (activeModule) break;
   }
 
-  // TODO (BIT-811): Wire this to actual step progression logic in BIT-812/813
-  const currentStep = 2;
-  const totalSteps = 4;
+  // THE FIX: The Step State now lives here!
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isQuizLocked, setIsQuizLocked] = useState(false);
 
-  if (!activeModule) return <div>Module not found</div>;
+  if (!activeModule || !activeModule.steps || activeModule.steps.length === 0) {
+    return <div>Module not found or has no steps</div>;
+  }
+
+  const handleStepChange = (newIndex: number) => {
+    setCurrentStepIndex(newIndex);
+    setIsQuizLocked(activeModule.steps[newIndex].type === 'QUIZ');
+  };
+
+  const handleQuizUnlock = () => {
+    setIsQuizLocked(false);
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
-      {/* Far Left App Shell Sidebar */}
       <Sidebar />
-
-      {/* Course Module List Sidebar */}
       <ModuleNav />
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Module Header */}
+        {/* THE FIX: Now passing dynamic currentStepIndex! */}
         <ModuleHeader
           module={activeModule}
           isFirstInLesson={isFirstInLesson}
-          currentStep={currentStep}
-          totalSteps={totalSteps}
+          currentStep={currentStepIndex + 1}
+          totalSteps={activeModule.steps.length}
         />
 
-        {/* Step Body Placeholder (This will be Task 812) */}
-        <div className="flex-1 flex items-center justify-center text-gray-400 p-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-heading text-gray-900 tracking-wide">
-              Step Content Area
-            </h2>
-            <p className="mt-2 text-sm">
-              Flashcards, Quizzes, and Text will go here (BIT-812)
-            </p>
-          </div>
-        </div>
+        <StepRunner
+          steps={activeModule.steps}
+          currentStepIndex={currentStepIndex}
+          isQuizLocked={isQuizLocked}
+          onStepChange={handleStepChange}
+          onQuizUnlock={handleQuizUnlock}
+        />
       </main>
     </div>
   );

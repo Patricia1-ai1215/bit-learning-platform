@@ -460,3 +460,18 @@ h6 {
     @apply font-sans;
   }
 }
+
+/* 3D Flashcard Flip Utilities */
+.perspective-1000px {
+  perspective: 1000px;
+}
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
