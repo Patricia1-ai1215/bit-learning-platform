@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react';
 
+
+
 import Sidebar from "./Sidebar";
 import ModuleNav from "./ModuleNav";
 import ModuleHeader from "./ModuleHeader";
@@ -10,8 +12,11 @@ import CompletionScreen from "./CompletionScreen";
 import { mockCourseData } from "@/lib/mock/courseData";
 
 export default function ModulePage() {
-  const activeModuleId = 'm2';
-  
+  const routerPath = "/dashboard/student"; // kept for consistency
+  void routerPath;
+
+  const activeModuleId = "m2";
+
   let activeModule = null;
   let isFirstInLesson = false;
 
@@ -28,14 +33,13 @@ export default function ModulePage() {
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isQuizLocked, setIsQuizLocked] = useState(false);
-  
-  // Completion & Stats States
+
   const [isModuleComplete, setIsModuleComplete] = useState(false);
   const [quizScore, setQuizScore] = useState("0/0");
-  const [seenFlashcards, setSeenFlashcards] = useState<Set<number>>(new Set([0])); // ICI
-  const [startTime] = useState(Date.now()); 
+  const [seenFlashcards, setSeenFlashcards] = useState<Set<number>>(new Set([0]));
+  const [startTime] = useState(() => (typeof window !== "undefined" ? Date.now() : 0));
 
-  // Optimistic UI Progress Saving State
+
   const [isProgressSaving, setIsProgressSaving] = useState(false);
 
   if (!activeModule || !activeModule.steps || activeModule.steps.length === 0) {
@@ -52,7 +56,7 @@ export default function ModulePage() {
 
   const handleStepChange = (newIndex: number) => {
     setCurrentStepIndex(newIndex);
-    setIsQuizLocked(activeModule.steps[newIndex].type === 'QUIZ');
+    setIsQuizLocked(activeModule.steps[newIndex].type === "QUIZ");
     saveProgress(newIndex);
   };
 
@@ -66,58 +70,62 @@ export default function ModulePage() {
   };
 
   const handleBackToCourse = () => {
-    alert("Navigating back to course overview...");
+    // Intentionally no alert.
+    window.location.href = "/dashboard/student";
   };
 
   const handleStartNextModule = (moduleId: string) => {
-    alert(`Starting next module: ${moduleId}`);
+    // Intentionally no alert.
+    void moduleId;
+    window.location.href = "/student/module";
   };
 
   const timeSpentString = useMemo(() => {
-    const timeSpentMinutes = Math.round((Date.now() - startTime) / 60000);
+    const now = Date.now();
+    const timeSpentMinutes = Math.round((now - startTime) / 60000);
     return timeSpentMinutes === 0 ? "< 1 min" : `${timeSpentMinutes} min`;
   }, [startTime]);
+
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
       <Sidebar />
       <ModuleNav />
-      
+
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <ModuleHeader 
-          module={activeModule} 
+        <ModuleHeader
+          module={activeModule}
           isFirstInLesson={isFirstInLesson}
           currentStep={currentStepIndex + 1}
           totalSteps={activeModule.steps.length}
           isProgressSaving={isProgressSaving}
         />
-        
+
         {isModuleComplete ? (
-          <CompletionScreen 
+          <CompletionScreen
             course={mockCourseData}
             currentModule={activeModule}
             quizScore={quizScore}
-            flashcardsSeen={seenFlashcards.size} // ICI
+            flashcardsSeen={seenFlashcards.size}
             timeSpent={timeSpentString}
             onBackToCourse={handleBackToCourse}
             onStartNextModule={handleStartNextModule}
           />
         ) : (
-          <StepRunner 
-            steps={activeModule.steps} 
+          <StepRunner
+            steps={activeModule.steps}
             currentStepIndex={currentStepIndex}
             isQuizLocked={isQuizLocked}
             onStepChange={handleStepChange}
             onQuizUnlock={handleQuizUnlock}
             onModuleComplete={handleModuleComplete}
             setQuizScore={setQuizScore}
-            seenFlashcards={seenFlashcards} // ICI
-            setSeenFlashcards={setSeenFlashcards} // ICI
+            seenFlashcards={seenFlashcards}
+            setSeenFlashcards={setSeenFlashcards}
           />
         )}
       </main>
     </div>
   );
 }
-
 
